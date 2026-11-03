@@ -21,7 +21,7 @@ Dibangun murni dengan **HTML + CSS + JavaScript vanilla**: tanpa framework, tanp
 | **Navigasi** | Bar glass dengan *backdrop blur*, *scroll‑spy* penanda section aktif, menu hamburger di mobile |
 | **Mikro‑interaksi** | Kursor kustom, spotlight mengikuti kursor di kartu, tombol dengan animasi isi, back‑to‑top |
 | **Salin email** | Tombol salin ke clipboard (Clipboard API + fallback) dengan notifikasi toast |
-| **Daftar repo** | 5 repositori GitHub terbaru, diambil manual dan ditautkan langsung |
+| **Daftar repo** | 10 repositori GitHub terbaru, diambil manual dan ditautkan langsung |
 
 ## Aksesibilitas & praktik terbaik
 
