@@ -325,9 +325,20 @@ section{padding:clamp(76px,11vh,168px) var(--pad);position:relative;}
 .word{display:inline-block;white-space:nowrap;}
 .js .kinetic{opacity:0;visibility:hidden;transition:opacity .5s ease;}
 .js .kinetic.in{opacity:1;visibility:visible;}
-.js .ch{display:inline-block;will-change:transform,opacity;transform:translateY(112%) rotate(6deg);opacity:0;
-  transition:transform 1.05s var(--ease),opacity .7s ease;transition-delay:calc(var(--i,0) * 36ms);}
-.js .kinetic.in .ch{transform:translateY(0) rotate(0);opacity:1;}
+.js .ch{
+  display:inline-block;will-change:transform,opacity;
+  transform:translateY(112%) rotate(6deg);opacity:0;
+  transition:transform 1.05s var(--ease),opacity .7s ease;
+  transition-delay:calc(var(--i,0) * 36ms);
+}
+/* Akhir reveal + komposisi efek hover (--h = kedekatan kursor, 0..1) */
+.js .kinetic.in .ch{
+  transform:translateY(calc(var(--h,0) * -0.30em)) rotate(0) scale(calc(1 + var(--h,0) * 0.14));
+  opacity:1;
+}
+/* Setelah reveal selesai: transisi pendek tanpa delay supaya hover responsif */
+.js .kinetic.settled .ch{transition:transform .42s var(--ease),opacity .3s ease;transition-delay:0ms;}
+.js .line-mask.settled{overflow:visible;}
 
 /* Tombol */
 .btn{
@@ -455,12 +466,20 @@ section{padding:clamp(76px,11vh,168px) var(--pad);position:relative;}
   text-transform:uppercase;color:var(--fg);max-width:20ch;
 }
 /* Reveal premium: naik + fokus dari blur, stagger per huruf */
+.js .quote blockquote .ch{transform:translateY(78%) scale(1.06);filter:blur(9px);}
 .js .quote blockquote .ch{
-  transform:translateY(78%) scale(1.06);filter:blur(9px);
   transition:transform 1.15s var(--ease),opacity .8s ease,filter .95s var(--ease);
   transition-delay:calc(var(--i,0) * 42ms);
 }
-.js .quote blockquote.kinetic.in .ch{transform:translateY(0) scale(1);filter:blur(0);}
+.js .quote blockquote.kinetic.in .ch{
+  transform:translateY(calc(var(--h,0) * -0.30em)) scale(1);
+  filter:blur(0);
+}
+/* Transisi pendek setelah reveal agar hover responsif */
+.js .quote blockquote.settled .ch{
+  transition:transform .42s var(--ease),opacity .35s ease,filter .42s ease;
+  transition-delay:0ms;
+}
 /* Gelombang kilau yang menyapu tiap huruf secara berkala */
 .js .quote blockquote.kinetic.in .ch{
   animation:quoteWave 7s var(--ease) infinite;
@@ -729,7 +748,7 @@ section{padding:clamp(76px,11vh,168px) var(--pad);position:relative;}
     <div class="wrap">
       <p class="hero-badge reveal in"><span class="dot" aria-hidden="true"></span> Tersedia untuk kolaborasi</p>
 
-      <h1 class="hero-title" id="hero-heading" aria-label="Hizkia Letwar">
+      <h1 class="hero-title" id="hero-heading" aria-label="Hizkia Letwar" data-prox>
         <span class="row line-mask kinetic">Hizkia</span>
         <span class="row line-mask outline kinetic">Letwar</span>
       </h1>
@@ -796,7 +815,7 @@ section{padding:clamp(76px,11vh,168px) var(--pad);position:relative;}
       </div>
 
       <div class="quote reveal">
-        <blockquote class="kinetic">Elegance Is My Philosophy</blockquote>
+        <blockquote class="kinetic" data-prox>Elegance Is My Philosophy</blockquote>
         <p>UI yang bersih, fungsi yang elegan, fitur yang thoughtful. Aku percaya pada solusi yang tidak hanya fungsional, tapi indah dalam kesederhanaan dan tujuannya.</p>
       </div>
     </div>
@@ -1008,7 +1027,7 @@ section{padding:clamp(76px,11vh,168px) var(--pad);position:relative;}
   <section id="contact" aria-labelledby="contact-heading">
     <div class="wrap">
       <div class="eyebrow reveal"><b>05</b> — Kontak</div>
-      <h2 class="contact-title kinetic" id="contact-heading">Yuk bangun sesuatu yang elegan</h2>
+      <h2 class="contact-title kinetic" id="contact-heading" data-prox>Yuk bangun sesuatu yang elegan</h2>
       <p class="lead reveal d1" style="margin-top:24px">Terbuka untuk kolaborasi, proyek, atau sekadar ngobrol soal AI dan desain elegan.</p>
 
       <div class="contact-links">
@@ -1114,6 +1133,13 @@ function kinetic(el, text) {
   el.classList.add("in");
 }
 
+/* Membuat transisi hover responsif setelah reveal selesai */
+function settle(el) {
+  const n = el.querySelectorAll(".ch").length;
+  const wait = 1200 + Math.min(n, 60) * 45;
+  setTimeout(() => el.classList.add("settled"), wait);
+}
+
 /* =============================================================
    TEMA
    ============================================================= */
@@ -1173,7 +1199,7 @@ const rotatorEl = $("#rotator");
    ============================================================= */
 $$(".kinetic").forEach(el => {
   /* Hero title dianimasikan segera; section lain saat terlihat */
-  if (el.closest("#hero")) { el.dataset.done = "1"; kinetic(el); }
+  if (el.closest("#hero")) { el.dataset.done = "1"; kinetic(el); settle(el); }
 });
 
 const revealIO = new IntersectionObserver((entries) => {
@@ -1183,6 +1209,7 @@ const revealIO = new IntersectionObserver((entries) => {
     if (n.classList.contains("kinetic") && !n.dataset.done && !n.closest("#hero")) {
       n.dataset.done = "1";
       kinetic(n, n.textContent.trim());
+      settle(n);
     }
     n.classList.add("in");
     if (n.dataset.count && !n.dataset.counted) {
@@ -1300,6 +1327,39 @@ function countUp(el, target) {
         catch (e2) { show("Gagal menyalin — salin manual ya"); }
         ta.remove();
       }
+    });
+  });
+})();
+
+/* =============================================================
+   EFEK KEDEKATAN KURSOR PADA TEKS KINETIC
+   Huruf terangkat & membesar mengikuti jarak kursor (--h)
+   ============================================================= */
+(function proximityText() {
+  if (COARSE || REDUCED) return;
+  const RADIUS = 165;
+
+  $$("[data-prox]").forEach(el => {
+    let raf = 0, mx = 0, my = 0;
+
+    const apply = () => {
+      raf = 0;
+      for (const c of el.querySelectorAll(".ch")) {
+        const r = c.getBoundingClientRect();
+        const dx = mx - (r.left + r.width / 2);
+        const dy = my - (r.top + r.height / 2);
+        const t = Math.max(0, 1 - Math.hypot(dx, dy) / RADIUS);
+        c.style.setProperty("--h", (t * t).toFixed(3));
+      }
+    };
+
+    el.addEventListener("mousemove", e => {
+      mx = e.clientX; my = e.clientY;
+      if (!raf) raf = requestAnimationFrame(apply);
+    });
+
+    el.addEventListener("mouseleave", () => {
+      for (const c of el.querySelectorAll(".ch")) c.style.setProperty("--h", "0");
     });
   });
 })();
